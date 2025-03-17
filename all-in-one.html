@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>随机点名系统 (一体化版本)</title>
+		<style>
+			/* 全局样式 */
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				font-family: 'Helvetica Neue', Arial, sans-serif;
+				line-height: 1.6;
+				color: #333;
+				background-color: #f5f5f5;
+			}
+
+			button {
+				cursor: pointer;
+				border: none;
+				border-radius: 4px;
+				padding: 8px 16px;
+				font-size: 14px;
+				transition: all 0.3s ease;
+			}
+
+			button:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+			}
+
+			/* App 容器 */
+			.app-container {
+				max-width: 1200px;
+				margin: 0 auto;
+				padding: 20px;
+			}
+
+			.app-header {
+				text-align: center;
+				margin-bottom: 30px;
+				padding-bottom: 20px;
+				border-bottom: 1px solid #ddd;
+			}
+
+			.app-header h1 {
+				color: #2c3e50;
+				font-size: 32px;
+			}
+
+			/* 班级列表样式 */
+			.class-list-container {
+				background-color: #fff;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+				padding: 20px;
+			}
+
+			.class-list-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+			}
+
+			.class-list-header h2 {
+				color: #2c3e50;
+			}
+
+			.create-btn {
+				background-color: #3498db;
+				color: white;
+				font-weight: bold;
+			}
+
+			.create-btn:hover {
+				background-color: #2980b9;
+			}
+
+			.empty-list {
+				text-align: center;
+				padding: 40px 0;
+				color: #7f8c8d;
+			}
+
+			.class-table {
+				width: 100%;
+				border-collapse: collapse;
+			}
+
+			.class-table th,
+			.class-table td {
+				padding: 12px 15px;
+				text-align: left;
+				border-bottom: 1px solid #ddd;
+			}
+
+			.class-table th {
+				background-color: #f8f9fa;
+				font-weight: bold;
+				color: #2c3e50;
+			}
+
+			.class-table tr:hover {
+				background-color: #f5f5f5;
+			}
+
+			.action-btn {
+				margin-right: 8px;
+			}
+
+			.start-btn {
+				background-color: #2ecc71;
+				color: white;
+			}
+
+			.start-btn:hover {
+				background-color: #27ae60;
+			}
+
+			.delete-btn {
+				background-color: #e74c3c;
+				color: white;
+			}
+
+			.delete-btn:hover {
+				background-color: #c0392b;
+			}
+
+			/* 模态框样式 */
+			.modal-overlay {
+				position: fixed;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background-color: rgba(0, 0, 0, 0.5);
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				z-index: 1000;
+			}
+
+			.modal-content {
+				background-color: #fff;
+				border-radius: 8px;
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+				padding: 25px;
+				width: 500px;
+				max-width: 90%;
+			}
+
+			.modal-content h3 {
+				margin-bottom: 20px;
+				color: #2c3e50;
+				text-align: center;
+			}
+
+			.form-group {
+				margin-bottom: 20px;
+			}
+
+			.form-group label {
+				display: block;
+				margin-bottom: 8px;
+				font-weight: bold;
+				color: #2c3e50;
+			}
+
+			.form-group input,
+			.form-group textarea {
+				width: 100%;
+				padding: 10px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				font-size: 14px;
+			}
+
+			.form-group textarea {
+				resize: vertical;
+				min-height: 100px;
+			}
+
+			.error {
+				color: #e74c3c;
+				font-size: 12px;
+				margin-top: 5px;
+			}
+
+			.modal-actions {
+				display: flex;
+				justify-content: flex-end;
+				margin-top: 20px;
+			}
+
+			.cancel-btn {
+				background-color: #95a5a6;
+				color: white;
+				margin-right: 10px;
+			}
+
+			.cancel-btn:hover {
+				background-color: #7f8c8d;
+			}
+
+			.submit-btn {
+				background-color: #3498db;
+				color: white;
+				font-weight: bold;
+			}
+
+			.submit-btn:hover {
+				background-color: #2980b9;
+			}
+
+			/* 随机点名样式 */
+			.roll-call-container {
+				background-color: #fff;
+				border-radius: 8px;
+				box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+				padding: 20px;
+			}
+
+			.roll-call-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 20px;
+			}
+
+			.roll-call-header h2 {
+				color: #2c3e50;
+			}
+
+			.back-btn {
+				background-color: #95a5a6;
+				color: white;
+			}
+
+			.back-btn:hover {
+				background-color: #7f8c8d;
+			}
+
+			.roll-call-content {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				margin-bottom: 30px;
+			}
+
+			.class-info {
+				margin-bottom: 20px;
+				text-align: center;
+			}
+
+			.class-info p {
+				margin-bottom: 8px;
+			}
+
+			.roll-call-display {
+				width: 100%;
+				height: 200px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				margin: 30px 0;
+				border-radius: 8px;
+				background-color: #f8f9fa;
+				box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+			}
+
+			.student-name {
+				font-size: 48px;
+				font-weight: bold;
+				color: #2c3e50;
+				text-align: center;
+				transition: all 0.5s ease;
+			}
+
+			.student-name.selected {
+				color: #e74c3c;
+				transform: scale(1.2);
+				animation: celebrate 1s ease-in-out;
+			}
+
+			@keyframes celebrate {
+				0% {
+					transform: scale(1);
+				}
+				50% {
+					transform: scale(1.5);
+				}
+				100% {
+					transform: scale(1.2);
+				}
+			}
+
+			.placeholder {
+				color: #95a5a6;
+				font-size: 20px;
+			}
+
+			.roll-call-btn {
+				background-color: #e74c3c;
+				color: white;
+				font-size: 18px;
+				font-weight: bold;
+				padding: 12px 30px;
+				border-radius: 30px;
+				transition: all 0.3s ease;
+			}
+
+			.roll-call-btn:hover {
+				background-color: #c0392b;
+				transform: translateY(-2px);
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+			}
+
+			.roll-call-btn.rolling {
+				animation: pulse 1s infinite;
+			}
+
+			@keyframes pulse {
+				0% {
+					transform: scale(1);
+				}
+				50% {
+					transform: scale(1.05);
+				}
+				100% {
+					transform: scale(1);
+				}
+			}
+
+			.student-list {
+				margin-top: 30px;
+			}
+
+			.student-list h3 {
+				margin-bottom: 15px;
+				color: #2c3e50;
+				text-align: center;
+			}
+
+			.student-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+				gap: 10px;
+			}
+
+			.student-item {
+				padding: 10px;
+				background-color: #f8f9fa;
+				border-radius: 4px;
+				text-align: center;
+				transition: all 0.3s ease;
+			}
+
+			.student-item.highlighted {
+				background-color: #e74c3c;
+				color: white;
+				font-weight: bold;
+				transform: scale(1.05);
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+			}
+		</style>
+	</head>
+	<body>
+		<div id="root">
+			<!-- 应用将在这里渲染 -->
+			<div style="text-align: center; padding: 50px">
+				<h2>随机点名系统正在加载中...</h2>
+				<p>如果长时间未加载，请检查控制台是否有错误信息</p>
+			</div>
+		</div>
+
+		<!-- 加载React库 -->
+		<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+		<script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+		<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+		<!-- 应用代码 -->
+		<script type="text/babel">
+			// ClassList组件
+			const ClassList = ({
+				classes,
+				onCreateClass,
+				onDeleteClass,
+				onStartRollCall,
+			}) => {
+				const [isModalOpen, setIsModalOpen] = React.useState(false);
+				const [className, setClassName] = React.useState('');
+				const [teacher, setTeacher] = React.useState('');
+				const [studentList, setStudentList] = React.useState('');
+				const [errors, setErrors] = React.useState({});
+
+				// 打开创建班级弹窗
+				const openModal = () => {
+					setIsModalOpen(true);
+					setClassName('');
+					setTeacher('');
+					setStudentList('');
+					setErrors({});
+				};
+
+				// 关闭创建班级弹窗
+				const closeModal = () => {
+					setIsModalOpen(false);
+				};
+
+				// 验证表单
+				const validateForm = () => {
+					const newErrors = {};
+
+					if (!className.trim()) {
+						newErrors.className = '班级名称不能为空';
+					}
+
+					if (!teacher.trim()) {
+						newErrors.teacher = '教师名称不能为空';
+					}
+
+					if (!studentList.trim()) {
+						newErrors.studentList = '学生名单不能为空';
+					} else {
+						const students = studentList
+							.split(',')
+							.map((name) => name.trim())
+							.filter((name) => name);
+						if (students.length === 0) {
+							newErrors.studentList = '学生名单格式不正确';
+						} else if (students.length > 100) {
+							newErrors.studentList = '学生数量不能超过100个';
+						}
+					}
+
+					setErrors(newErrors);
+					return Object.keys(newErrors).length === 0;
+				};
+
+				// 提交创建班级表单
+				const handleSubmit = (e) => {
+					e.preventDefault();
+
+					if (validateForm()) {
+						const students = studentList
+							.split(',')
+							.map((name) => name.trim())
+							.filter((name) => name);
+
+						const newClass = {
+							name: className,
+							teacher: teacher,
+							students: students,
+						};
+
+						onCreateClass(newClass);
+						closeModal();
+					}
+				};
+
+				return (
+					<div className="class-list-container">
+						<div className="class-list-header">
+							<h2>班级列表</h2>
+							<button className="create-btn" onClick={openModal}>
+								创建班级
+							</button>
+						</div>
+
+						{classes.length === 0 ? (
+							<div className="empty-list">
+								<p>暂无班级，请点击"创建班级"按钮添加</p>
+							</div>
+						) : (
+							<table className="class-table">
+								<thead>
+									<tr>
+										<th>班级名称</th>
+										<th>教师</th>
+										<th>学生数量</th>
+										<th>操作</th>
+									</tr>
+								</thead>
+								<tbody>
+									{classes.map((classItem, index) => (
+										<tr key={index}>
+											<td>{classItem.name}</td>
+											<td>{classItem.teacher}</td>
+											<td>{classItem.students.length}</td>
+											<td>
+												<button
+													className="action-btn start-btn"
+													onClick={() => onStartRollCall(classItem)}
+												>
+													开始点名
+												</button>
+												<button
+													className="action-btn delete-btn"
+													onClick={() => onDeleteClass(index)}
+												>
+													删除
+												</button>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						)}
+
+						{isModalOpen && (
+							<div className="modal-overlay">
+								<div className="modal-content">
+									<h3>创建班级</h3>
+									<form onSubmit={handleSubmit}>
+										<div className="form-group">
+											<label htmlFor="className">班级名称:</label>
+											<input
+												type="text"
+												id="className"
+												value={className}
+												onChange={(e) => setClassName(e.target.value)}
+											/>
+											{errors.className && (
+												<div className="error">{errors.className}</div>
+											)}
+										</div>
+
+										<div className="form-group">
+											<label htmlFor="teacher">教师:</label>
+											<input
+												type="text"
+												id="teacher"
+												value={teacher}
+												onChange={(e) => setTeacher(e.target.value)}
+											/>
+											{errors.teacher && (
+												<div className="error">{errors.teacher}</div>
+											)}
+										</div>
+
+										<div className="form-group">
+											<label htmlFor="studentList">
+												学生名单 (用英文逗号分隔):
+											</label>
+											<textarea
+												id="studentList"
+												value={studentList}
+												onChange={(e) => setStudentList(e.target.value)}
+												placeholder="例如: 张三,李四,王五"
+												rows="5"
+											/>
+											{errors.studentList && (
+												<div className="error">{errors.studentList}</div>
+											)}
+										</div>
+
+										<div className="modal-actions">
+											<button
+												type="button"
+												className="cancel-btn"
+												onClick={closeModal}
+											>
+												取消
+											</button>
+											<button type="submit" className="submit-btn">
+												完成创建
+											</button>
+										</div>
+									</form>
+								</div>
+							</div>
+						)}
+					</div>
+				);
+			};
+
+			// RandomRollCall组件
+			const RandomRollCall = ({ classData, onBack }) => {
+				const [isRolling, setIsRolling] = React.useState(false);
+				const [selectedStudent, setSelectedStudent] = React.useState(null);
+				const [displayedName, setDisplayedName] = React.useState('');
+				const [showAnimation, setShowAnimation] = React.useState(false);
+				const rollIntervalRef = React.useRef(null);
+				const students = classData.students;
+
+				// 清理定时器
+				React.useEffect(() => {
+					return () => {
+						if (rollIntervalRef.current) {
+							clearInterval(rollIntervalRef.current);
+						}
+					};
+				}, []);
+
+				// 开始随机点名
+				const startRollCall = () => {
+					if (isRolling) return;
+
+					setIsRolling(true);
+					setShowAnimation(false);
+
+					// 随机滚动名字
+					let counter = 0;
+					rollIntervalRef.current = setInterval(() => {
+						const randomIndex = Math.floor(Math.random() * students.length);
+						setDisplayedName(students[randomIndex]);
+
+						counter++;
+
+						// 3秒后停止滚动
+						if (counter > 15) {
+							// 约3秒，每200ms更新一次
+							clearInterval(rollIntervalRef.current);
+							const finalIndex = Math.floor(Math.random() * students.length);
+							const selected = students[finalIndex];
+							setSelectedStudent(selected);
+							setDisplayedName(selected);
+							setIsRolling(false);
+							setShowAnimation(true);
+						}
+					}, 200);
+				};
+
+				return (
+					<div className="roll-call-container">
+						<div className="roll-call-header">
+							<h2>{classData.name} - 随机点名</h2>
+							<button className="back-btn" onClick={onBack}>
+								返回班级列表
+							</button>
+						</div>
+
+						<div className="roll-call-content">
+							<div className="class-info">
+								<p>
+									<strong>班级:</strong> {classData.name}
+								</p>
+								<p>
+									<strong>教师:</strong> {classData.teacher}
+								</p>
+								<p>
+									<strong>学生人数:</strong> {students.length}
+								</p>
+							</div>
+
+							<div className="roll-call-display">
+								{displayedName ? (
+									<div
+										className={`student-name ${
+											showAnimation ? 'selected' : ''
+										}`}
+									>
+										{displayedName}
+									</div>
+								) : (
+									<div className="placeholder">点击下方按钮开始点名</div>
+								)}
+							</div>
+
+							<button
+								className={`roll-call-btn ${isRolling ? 'rolling' : ''}`}
+								onClick={startRollCall}
+								disabled={isRolling}
+							>
+								{isRolling ? '点名中...' : '开始点名'}
+							</button>
+						</div>
+
+						<div className="student-list">
+							<h3>学生名单</h3>
+							<div className="student-grid">
+								{students.map((student, index) => (
+									<div
+										key={index}
+										className={`student-item ${
+											selectedStudent === student ? 'highlighted' : ''
+										}`}
+									>
+										{student}
+									</div>
+								))}
+							</div>
+						</div>
+					</div>
+				);
+			};
+
+			// App组件
+			const App = () => {
+				const [classes, setClasses] = React.useState([]);
+				const [currentPage, setCurrentPage] = React.useState('classList');
+				const [selectedClass, setSelectedClass] = React.useState(null);
+
+				// 从本地存储加载班级数据
+				React.useEffect(() => {
+					try {
+						const savedClasses = localStorage.getItem('classes');
+						if (savedClasses) {
+							setClasses(JSON.parse(savedClasses));
+						}
+					} catch (error) {
+						console.error('加载班级数据失败:', error);
+					}
+				}, []);
+
+				// 保存班级数据到本地存储
+				React.useEffect(() => {
+					try {
+						localStorage.setItem('classes', JSON.stringify(classes));
+					} catch (error) {
+						console.error('保存班级数据失败:', error);
+					}
+				}, [classes]);
+
+				// 创建新班级
+				const createClass = (newClass) => {
+					setClasses([...classes, newClass]);
+				};
+
+				// 删除班级
+				const deleteClass = (index) => {
+					const updatedClasses = [...classes];
+					updatedClasses.splice(index, 1);
+					setClasses(updatedClasses);
+				};
+
+				// 开始点名
+				const startRollCall = (classData) => {
+					setSelectedClass(classData);
+					setCurrentPage('rollCall');
+				};
+
+				// 返回班级列表
+				const backToClassList = () => {
+					setCurrentPage('classList');
+					setSelectedClass(null);
+				};
+
+				return (
+					<div className="app-container">
+						<header className="app-header">
+							<h1>随机点名系统</h1>
+						</header>
+
+						{currentPage === 'classList' ? (
+							<ClassList
+								classes={classes}
+								onCreateClass={createClass}
+								onDeleteClass={deleteClass}
+								onStartRollCall={startRollCall}
+							/>
+						) : (
+							<RandomRollCall
+								classData={selectedClass}
+								onBack={backToClassList}
+							/>
+						)}
+					</div>
+				);
+			};
+
+			// 渲染应用
+			ReactDOM.render(
+				<React.StrictMode>
+					<App />
+				</React.StrictMode>,
+				document.getElementById('root')
+			);
+		</script>
+	</body>
+</html>
